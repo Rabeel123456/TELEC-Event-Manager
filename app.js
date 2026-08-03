@@ -1,4 +1,23 @@
-let token=localStorage.telecToken||'',user=null,events=[],users=[],audit=[],network=[],settings={};const $=x=>document.getElementById(x),pages=['dashboard','events','add','users','audit'];
+let savedToken = localStorage.getItem('telecToken') || '';
+
+if (
+  savedToken.includes('Phir Vercel mein') ||
+  savedToken.includes('SUPABASE_ANON_KEY') ||
+  savedToken.includes('Publishable Key paste karo') ||
+  /\s/.test(savedToken)
+) {
+  localStorage.removeItem('telecToken');
+  savedToken = '';
+}
+
+let token = savedToken,
+    user = null,
+    events = [],
+    users = [],
+    audit = [],
+    network = [],
+    settings = {};
+const $=x=>document.getElementById(x),pages=['dashboard','events','add','users','audit'];
 function toast(m,e=false){const t=$('toast');t.textContent=m;t.className=e?'error':'';t.style.display='block';setTimeout(()=>t.style.display='none',3500)}
 async function api(url, opt = {}) {
   const controller = new AbortController();
