@@ -88,3 +88,16 @@
 @media(max-width:420px){.event-card-actions{grid-template-columns:1fr}}
 
 .map-preview{display:flex;align-items:center;min-height:44px}.map-button{display:inline-flex!important;align-items:center;justify-content:center;text-decoration:none!important;padding:10px 14px;border-radius:8px;font-weight:700}.event-card-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}@media(max-width:700px){.event-card-actions{width:100%;margin-top:10px}.event-card-actions .map-button,.event-card-actions button{flex:1;min-width:130px}.map-preview .map-button{width:100%}}
+
+.side-bottom::after{
+    content:"Developed by\A Rabeel Ahmed Siddiqui";
+    white-space:pre;
+    display:block;
+    text-align:center;
+    margin-top:15px;
+    padding-top:10px;
+    border-top:1px solid rgba(255,255,255,.15);
+    font-size:11px;
+    color:#b8c1d1;
+    line-height:1.4;
+}
