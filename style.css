@@ -101,3 +101,11 @@
     color:#b8c1d1;
     line-height:1.4;
 }
+
+.grid2{
+    display:none !important;
+}
+
+.page-dashboard{
+    padding-bottom:20px;
+}
