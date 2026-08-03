@@ -225,6 +225,25 @@ function renderDateEvents(){
 $('dashboardDate').onchange=renderDateEvents;
 $('viewToday').onclick=()=>{$('dashboardDate').value=iso(new Date());renderDateEvents()};
 $('viewTomorrow').onclick=()=>{const d=new Date();d.setDate(d.getDate()+1);$('dashboardDate').value=iso(d);renderDateEvents()};
+const wbtn=document.createElement('button');wbtn.id='shareWhatsApp';wbtn.type='button';wbtn.className='primary';wbtn.textContent='WhatsApp';wbtn.onclick=shareSelectedDateOnWhatsApp;document.querySelector('.date-view-controls').appendChild(wbtn);
+
+function shareSelectedDateOnWhatsApp(){
+  const d=$('dashboardDate').value||iso(new Date());
+  const list=events.filter(e=>e.eventDate===d).sort(sortEvent);
+  if(!list.length){toast('No events found for selected date.',true);return;}
+  const title=new Date(d+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  let msg='*TELEC Event Schedule*%0A*Date:* '+title+'%0A%0A';
+  list.forEach((e,i)=>{
+    msg+=`${i+1}. *${e.familyPersonName}*%0A`;
+    msg+=`🕒 ${fmtTime(e.eventTime)}%0A`;
+    msg+=`📍 ${e.venueLocation||'-'}%0A`;
+    if(e.city) msg+=`🏙 ${e.city}%0A`;
+    if(e.googleMapsLink) msg+=`${e.googleMapsLink}%0A`;
+    msg+='%0A';
+  });
+  window.open('https://wa.me/?text='+msg,'_blank');
+}
+
 
 function renderTable(){const q=$('search').value.toLowerCase(),f=$('fromDate').value,t=$('toDate').value;const list=events.filter(e=>(!q||JSON.stringify(e).toLowerCase().includes(q))&&(!f||e.eventDate>=f)&&(!t||e.eventDate<=t)).sort(sortEvent);$('eventRows').innerHTML=list.length?list.map(e=>`<tr><td>${fmtDate(e.eventDate)}</td><td>${fmtTime(e.eventTime)}</td><td><b>${esc(e.familyPersonName)}</b><div class="meta">${esc(e.status)}</div></td><td>${esc(e.eventType)}</td><td>${esc(e.day)}</td><td>${esc(e.venueLocation||'-')}</td><td>${esc(e.city||'-')}</td><td>${e.googleMapsLink?`<a href="${esc(e.googleMapsLink)}" target="_blank">Open Map</a>`:'-'}</td><td class="actions"><button onclick="editEvent('${e.id}')">Edit</button>${user.role==='admin'?`<button class="danger" onclick="deleteEvent('${e.id}')">Delete</button>`:''}</td></tr>`).join(''):'<tr><td colspan="9">No events found.</td></tr>'}
 ['search','fromDate','toDate'].forEach(x=>$(x).oninput=renderTable);$('clearFilters').onclick=()=>{['search','fromDate','toDate'].forEach(x=>$(x).value='');renderTable()};$('exportBtn').onclick=()=>{const cols=['eventDate','eventTime','familyPersonName','eventType','day','venueLocation','city','googleMapsLink','details','status'];const names=['Event Date','Event Time','Family / Person Name','Event Type','Day','Venue / Location','City','Google Maps Link','Additional Details','Status'];const q=v=>'\"'+String(v??'').replace(/\"/g,'\"\"')+'\"';const csv='\ufeff'+names.map(q).join(',')+'\n'+events.map(e=>cols.map(k=>q(e[k])).join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='TELEC_Event_Data.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
