@@ -1,4 +1,8 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TELEC Smart Event Manager Professional</title><link rel="stylesheet" href="style.css?v=professional-2"></head><body><div id="toast"></div>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TELEC Smart Event Manager Professional</title><link rel="stylesheet" href="style.css?v=professional-2">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0f2f63">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head><body><div id="toast"></div>
 <section id="login" class="login-wrap"><div class="login-card"><div class="brand">TELEC</div><h1>Smart Event Manager Professional</h1><p>Multi-user event and poster processing</p><form id="loginForm"><label>Username<input id="loginUser" value="admin" required></label><label>Password<input id="loginPass" type="password" required></label><button class="primary">Sign In</button></form><small>First login: admin / Telec@2026</small></div></section>
 <section id="app" class="hidden"><button id="menuToggle" class="menu-toggle" type="button" aria-label="Open menu">☰</button><div id="menuBackdrop" class="menu-backdrop"></div><aside><div class="logo">TELEC</div><div class="appname">Event Manager <b>Professional</b></div><nav><button data-page="dashboard" class="active">Dashboard</button><button data-page="events">Events</button><button data-page="add">Add / Poster</button><button data-page="users" class="admin-only">Users & Settings</button><button data-page="audit" class="admin-only">Activity Log</button></nav><div class="side-bottom"><div id="who"></div><button id="logout">Logout</button></div></aside><main><header><div><h2 id="pageTitle">Dashboard</h2><p id="todayText"></p></div><div class="header-actions"><button id="refresh">Refresh</button><button id="quickAdd" class="primary">+ Add Event</button></div></header>
 <div id="page-dashboard" class="page"><div id="stats" class="stats"></div>
@@ -15,5 +19,6 @@
 </section>
 
 <script src="app-new.js"></script>
+  <script src="/pwa-register.js"></script>
 </body>
 </html>
