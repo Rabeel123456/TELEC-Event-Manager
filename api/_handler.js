@@ -234,11 +234,31 @@ export default async function handler(req, res) {
       if (!profile || !profile.active || !(await bcrypt.compare(password, profile.password_hash))) {
         return json(res, 401, { error: 'Invalid username or password.' });
       }
-      const { data, error } = await anonClient().auth.signInWithPassword({ email: profile.email, password });
-      if (error || !data.session) return json(res, 401, { error: 'Login failed. Please run the administrator setup script again.' });
-      await audit(admin, profile, 'Login', 'Signed in');
-      return json(res, 200, { token: data.session.access_token });
-    }
+      // Keep the Supabase Auth password synchronized with the profile password.
+const { error: syncError } = await admin.auth.admin.updateUserById(
+  profile.id,
+  {
+    password,
+    email_confirm: true
+  }
+);
+
+if (syncError) {
+  return json(res, 500, {
+    error: `Administrator password sync failed: ${syncError.message}`
+  });
+}
+
+const { data, error } = await anonClient().auth.signInWithPassword({
+  email: profile.email,
+  password
+});
+
+if (error || !data.session) {
+  return json(res, 401, {
+    error: error?.message || 'Login failed after password synchronization.'
+  });
+}
 
     const { profile, admin } = await authenticated(req);
 
