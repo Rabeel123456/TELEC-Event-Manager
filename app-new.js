@@ -208,8 +208,23 @@ function showStatEvents(period){
   $('dateEvents').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function eventActionButtons(e){
-  const map=e.googleMapsLink?`<a class="map-button primary" href="${esc(e.googleMapsLink)}" target="_blank" rel="noopener noreferrer">📍 Open Map</a>`:'';
-  return `<div class="event-card-actions"><button type="button" onclick="editEvent('${e.id}')">Open Event</button>${map}</div>`;
+  const map = e.googleMapsLink
+    ? `<a class="map-button primary" href="${esc(e.googleMapsLink)}" target="_blank">Open Map</a>`
+    : '';
+
+  return `
+    <div class="event-card-actions">
+      <button type="button" onclick="showEventDetails('${e.id}')">
+        View Details
+      </button>
+
+      <button type="button" onclick="editEvent('${e.id}')">
+        Open Event
+      </button>
+
+      ${map}
+    </div>
+  `;
 }
 function renderDashboardEventList(title,list){
   $('dateEvents').innerHTML=`<div class="selected-date-title">${esc(title)} <span class="badge">${list.length} event${list.length===1?'':'s'}</span></div>`+(list.length?list.map(e=>`<div class="date-event-card"><div class="date-event-time"><div>${fmtDate(e.eventDate)}</div><div>${fmtTime(e.eventTime)}</div></div><div class="date-event-info"><b>${esc(e.familyPersonName)} · ${esc(e.eventType)}</b><div class="meta">${esc(e.venueLocation||'-')} · ${esc(e.city||'-')}</div><span class="badge ${esc(e.status)}">${esc(e.status)}</span></div>${eventActionButtons(e)}</div>`).join(''):'<div class="empty-date">No events found.</div>');
@@ -248,6 +263,31 @@ function shareSelectedDateOnWhatsApp(){
 function renderTable(){const q=$('search').value.toLowerCase(),f=$('fromDate').value,t=$('toDate').value;const list=events.filter(e=>(!q||JSON.stringify(e).toLowerCase().includes(q))&&(!f||e.eventDate>=f)&&(!t||e.eventDate<=t)).sort(sortEvent);$('eventRows').innerHTML=list.length?list.map(e=>`<tr><td>${fmtDate(e.eventDate)}</td><td>${fmtTime(e.eventTime)}</td><td><b>${esc(e.familyPersonName)}</b><div class="meta">${esc(e.status)}</div></td><td>${esc(e.eventType)}</td><td>${esc(e.day)}</td><td>${esc(e.venueLocation||'-')}</td><td>${esc(e.city||'-')}</td><td>${e.googleMapsLink?`<a href="${esc(e.googleMapsLink)}" target="_blank">Open Map</a>`:'-'}</td><td class="actions"><button onclick="editEvent('${e.id}')">Edit</button>${user.role==='admin'?`<button class="danger" onclick="deleteEvent('${e.id}')">Delete</button>`:''}</td></tr>`).join(''):'<tr><td colspan="9">No events found.</td></tr>'}
 ['search','fromDate','toDate'].forEach(x=>$(x).oninput=renderTable);$('clearFilters').onclick=()=>{['search','fromDate','toDate'].forEach(x=>$(x).value='');renderTable()};$('exportBtn').onclick=()=>{const cols=['eventDate','eventTime','familyPersonName','eventType','day','venueLocation','city','googleMapsLink','details','status'];const names=['Event Date','Event Time','Family / Person Name','Event Type','Day','Venue / Location','City','Google Maps Link','Additional Details','Status'];const q=v=>'\"'+String(v??'').replace(/\"/g,'\"\"')+'\"';const csv='\ufeff'+names.map(q).join(',')+'\n'+events.map(e=>cols.map(k=>q(e[k])).join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='TELEC_Event_Data.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 window.openEventMap=id=>{const e=events.find(x=>x.id===id);if(!e||!e.googleMapsLink)return toast('Google Maps link is not available for this event.',true);let url=String(e.googleMapsLink).trim();if(!/^https?:\/\//i.test(url))return toast('Invalid Google Maps link.',true);const w=window.open(url,'_blank','noopener,noreferrer');if(!w)window.location.href=url};
+window.showEventDetails = function(id){
+
+    const e = events.find(x => x.id === id);
+
+    if(!e) return;
+
+    alert(
+`Event: ${e.familyPersonName}
+
+Date: ${fmtDate(e.eventDate)}
+
+Time: ${fmtTime(e.eventTime)}
+
+Type: ${e.eventType}
+
+Venue: ${e.venueLocation || "-"}
+
+City: ${e.city || "-"}
+
+Status: ${e.status}
+
+Additional Details:
+
+${e.details || "No Details"}`);
+}
 window.editEvent=id=>{const e=events.find(x=>x.id===id);if(!e)return;['eventDate','eventTime','familyPersonName','eventType','day','venueLocation','city','googleMapsLink','details','status'].forEach(k=>$(k).value=e[k]||'');$('eventId').value=e.id;$('revision').value=e.revision;updateMapPreview();show('add')};window.deleteEvent=async id=>{if(!confirm('Delete this event? A backup will be created.'))return;try{await api('/api/events/'+id,{method:'DELETE'});toast('Event deleted');await load()}catch(e){toast(e.message,true)}};
 function setDay(){if(!$('eventDate').value){$('day').value='';return}$('day').value=new Date($('eventDate').value+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long'})}$('eventDate').onchange=setDay;
 function updateMapPreview(){const box=$('mapPreview');if(!box)return;const url=String($('googleMapsLink').value||'').trim();box.innerHTML=url?`<a class="map-button primary" href="${esc(url)}" target="_blank" rel="noopener noreferrer">📍 Open Saved Map Link</a>`:'<span class="meta">No map link saved for this event.</span>';} $('googleMapsLink').addEventListener('input',updateMapPreview);
