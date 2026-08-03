@@ -1,11 +1,9 @@
 let savedToken = localStorage.getItem('telecToken') || '';
 
-if (
-  savedToken.includes('Phir Vercel mein') ||
-  savedToken.includes('SUPABASE_ANON_KEY') ||
-  savedToken.includes('Publishable Key paste karo') ||
-  /\s/.test(savedToken)
-) {
+// Supabase access token valid JWT hota hai: xxx.yyy.zzz
+const validToken = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(savedToken);
+
+if (!validToken) {
   localStorage.removeItem('telecToken');
   savedToken = '';
 }
