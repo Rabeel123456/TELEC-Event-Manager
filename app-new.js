@@ -62,8 +62,128 @@ async function api(url, opt = {}) {
     clearTimeout(timer);
   }
 }
+function renderAll() {
+  const today = iso(new Date());
+  const tomorrowDate = new Date();
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const tomorrow = iso(tomorrowDate);
+
+  const next7Date = new Date();
+  next7Date.setDate(next7Date.getDate() + 7);
+  const next7 = iso(next7Date);
+
+  const todayEvents = events.filter(e => e.eventDate === today);
+  const tomorrowEvents = events.filter(e => e.eventDate === tomorrow);
+  const next7Events = events.filter(
+    e => e.eventDate >= today && e.eventDate <= next7
+  );
+  const pendingEvents = events.filter(e => e.status === 'Pending');
+
+  $('todayText').textContent = new Date().toLocaleDateString('en-GB', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+  });
+
+  $('stats').innerHTML = `
+    <div class="stat-card" onclick="showStatEvents('today')">
+      <span>Today</span>
+      <b>${todayEvents.length}</b>
+      <small>Tap to view</small>
+    </div>
+
+    <div class="stat-card" onclick="showStatEvents('tomorrow')">
+      <span>Tomorrow</span>
+      <b>${tomorrowEvents.length}</b>
+      <small>Tap to view</small>
+    </div>
+
+    <div class="stat-card" onclick="showStatEvents('next7')">
+      <span>Next 7 Days</span>
+      <b>${next7Events.length}</b>
+      <small>Tap to view</small>
+    </div>
+
+    <div class="stat-card" onclick="showStatEvents('pending')">
+      <span>Pending</span>
+      <b>${pendingEvents.length}</b>
+      <small>Tap to view</small>
+    </div>
+
+    <div class="stat-card" onclick="showStatEvents('all')">
+      <span>Total Events</span>
+      <b>${events.length}</b>
+      <small>Tap to view</small>
+    </div>
+  `;
+
+  const upcoming = [...events]
+    .filter(e => e.eventDate >= today)
+    .sort(sortEvent)
+    .slice(0, 8);
+
+  $('upcoming').innerHTML = upcoming.length
+    ? upcoming.map(e => `
+        <div class="upcoming-row">
+          <div>
+            <b>${esc(e.familyPersonName)}</b>
+            <div class="meta">
+              ${fmtDate(e.eventDate)} · ${fmtTime(e.eventTime)}
+            </div>
+            <div class="meta">
+              ${esc(e.venueLocation || '-')} · ${esc(e.city || '-')}
+            </div>
+          </div>
+          <span class="badge ${esc(e.status)}">${esc(e.status)}</span>
+        </div>
+      `).join('')
+    : '<div class="meta">No upcoming events.</div>';
+
+  $('network').innerHTML = network.map(item => `
+    <div class="network-row">
+      <span>${esc(item.label)}</span>
+      <b>${esc(item.value)}</b>
+    </div>
+  `).join('');
+
+  $('dashboardDate').value = today;
+
+  renderDateEvents();
+  renderTable();
+  renderUsers();
+  renderAudit();
+  show('dashboard');
+}
+
 $('loginForm').onsubmit=async e=>{e.preventDefault();try{const d=await api('/api/login',{method:'POST',body:JSON.stringify({username:$('loginUser').value,password:$('loginPass').value})});token=d.token;localStorage.telecToken=token;await load()}catch(x){toast(x.message,true)}};
-async function load(){try{const d=await api('/api/bootstrap');user=d.user;events=d.events||[];users=d.users||[];audit=d.audit||[];network=d.network||[];settings=d.settings||{};$('login').classList.add('hidden');$('app').classList.remove('hidden');document.querySelectorAll('.admin-only').forEach(x=>x.classList.toggle('hidden',user.role!=='admin'));$('who').innerHTML=`<b>${esc(user.name)}</b><br>${esc(user.role)}`;renderAll()}catch(e){logout(false)}}
+async function load() {
+  try {
+    const d = await api('/api/bootstrap');
+
+    user = d.user;
+    events = d.events || [];
+    users = d.users || [];
+    audit = d.audit || [];
+    network = d.network || [];
+    settings = d.settings || {};
+
+    $('login').classList.add('hidden');
+    $('app').classList.remove('hidden');
+
+    document.querySelectorAll('.admin-only').forEach(element => {
+      element.classList.toggle('hidden', user.role !== 'admin');
+    });
+
+    $('who').innerHTML = `<b>${esc(user.name)}</b><br>${esc(user.role)}`;
+
+    renderAll();
+  } catch (error) {
+    console.error('Dashboard load failed:', error);
+    toast(error.message || 'Dashboard could not be loaded.', true);
+    logout(false);
+  }
+}
 function logout(call=true){if(call&&token)api('/api/logout',{method:'POST'}).catch(()=>{});token='';localStorage.removeItem('telecToken');$('app').classList.add('hidden');$('login').classList.remove('hidden')}
 const closeMobileMenu=()=>{document.querySelector('aside')?.classList.remove('open');$('menuBackdrop')?.classList.remove('show')};
 $('menuToggle').onclick=()=>{const side=document.querySelector('aside');const open=!side.classList.contains('open');side.classList.toggle('open',open);$('menuBackdrop').classList.toggle('show',open)};
