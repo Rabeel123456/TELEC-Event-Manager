@@ -210,13 +210,30 @@ export default async function handler(req, res) {
       const username = clean(input.username).toLowerCase();
       const password = String(input.password || '');
       const admin = adminClient();
-      let { data: profile } = await admin.from('profiles').select('*').eq('username', username).maybeSingle();
+
+      let { data: profile } = await admin
+        .from('profiles')
+        .select('*')
+        .eq('username', username)
+        .maybeSingle();
+
       if (!profile) {
-        const { count } = await admin.from('profiles').select('id', { count: 'exact', head: true });
+        const { count } = await admin
+          .from('profiles')
+          .select('id', { count: 'exact', head: true });
+
         if (count === 0 && username === 'admin' && password.length >= 8) {
           const email = 'admin@telec.local';
-          const created = await admin.auth.admin.createUser({ email, password, email_confirm: true });
-          if (created.error) return json(res, 500, { error: created.error.message });
+          const created = await admin.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true
+          });
+
+          if (created.error) {
+            return json(res, 500, { error: created.error.message });
+          }
+
           const profileRow = {
             id: created.data.user.id,
             email,
@@ -226,39 +243,57 @@ export default async function handler(req, res) {
             active: true,
             password_hash: await bcrypt.hash(password, 12)
           };
-          const inserted = await admin.from('profiles').insert(profileRow).select().single();
-          if (inserted.error) return json(res, 500, { error: inserted.error.message });
+
+          const inserted = await admin
+            .from('profiles')
+            .insert(profileRow)
+            .select()
+            .single();
+
+          if (inserted.error) {
+            return json(res, 500, { error: inserted.error.message });
+          }
+
           profile = inserted.data;
         }
       }
-      if (!profile || !profile.active || !(await bcrypt.compare(password, profile.password_hash))) {
+
+      if (
+        !profile ||
+        !profile.active ||
+        !(await bcrypt.compare(password, profile.password_hash))
+      ) {
         return json(res, 401, { error: 'Invalid username or password.' });
       }
-      // Keep the Supabase Auth password synchronized with the profile password.
-const { error: syncError } = await admin.auth.admin.updateUserById(
-  profile.id,
-  {
-    password,
-    email_confirm: true
-  }
-);
 
-if (syncError) {
-  return json(res, 500, {
-    error: `Administrator password sync failed: ${syncError.message}`
-  });
-}
+      const { error: syncError } = await admin.auth.admin.updateUserById(
+        profile.id,
+        {
+          password,
+          email_confirm: true
+        }
+      );
 
-const { data, error } = await anonClient().auth.signInWithPassword({
-  email: profile.email,
-  password
-});
+      if (syncError) {
+        return json(res, 500, {
+          error: `Administrator password sync failed: ${syncError.message}`
+        });
+      }
 
-if (error || !data.session) {
-  return json(res, 401, {
-    error: error?.message || 'Login failed after password synchronization.'
-  });
-}
+      const { data, error } = await anonClient().auth.signInWithPassword({
+        email: profile.email,
+        password
+      });
+
+      if (error || !data.session) {
+        return json(res, 401, {
+          error: error?.message || 'Login failed after password synchronization.'
+        });
+      }
+
+      await audit(admin, profile, 'Login', 'Signed in');
+      return json(res, 200, { token: data.session.access_token });
+    }
 
     const { profile, admin } = await authenticated(req);
 
