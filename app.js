@@ -1,6 +1,50 @@
 let token=localStorage.telecToken||'',user=null,events=[],users=[],audit=[],network=[],settings={};const $=x=>document.getElementById(x),pages=['dashboard','events','add','users','audit'];
 function toast(m,e=false){const t=$('toast');t.textContent=m;t.className=e?'error':'';t.style.display='block';setTimeout(()=>t.style.display='none',3500)}
-async function api(url,opt={}){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),65000);opt.signal=controller.signal;opt.headers={...(opt.headers||{}),'Content-Type':'application/json',Authorization:`Bearer ${token}`};try{const r=await fetch(url,opt);let d={};try{d=await r.json()}catch{}if(!r.ok){if(r.status===401)logout(false);throw new Error(d.error||`Request failed (${r.status})`)}return d}catch(e){if(e.name==='AbortError')throw new Error('Request timed out. Please try again.');throw e}finally{clearTimeout(timer)}}
+async function api(url, opt = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 65000);
+
+  opt.signal = controller.signal;
+
+  const headers = {
+    ...(opt.headers || {}),
+    'Content-Type': 'application/json'
+  };
+
+  // Login request par Authorization header mat bhejo.
+  if (token && url !== '/api/login') {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  opt.headers = headers;
+
+  try {
+    const response = await fetch(url, opt);
+
+    let data = {};
+    try {
+      data = await response.json();
+    } catch {}
+
+    if (!response.ok) {
+      if (response.status === 401 && url !== '/api/login') {
+        logout(false);
+      }
+
+      throw new Error(data.error || `Request failed (${response.status})`);
+    }
+
+    return data;
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error('Request timed out. Please try again.');
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 $('loginForm').onsubmit=async e=>{e.preventDefault();try{const d=await api('/api/login',{method:'POST',body:JSON.stringify({username:$('loginUser').value,password:$('loginPass').value})});token=d.token;localStorage.telecToken=token;await load()}catch(x){toast(x.message,true)}};
 async function load(){try{const d=await api('/api/bootstrap');user=d.user;events=d.events||[];users=d.users||[];audit=d.audit||[];network=d.network||[];settings=d.settings||{};$('login').classList.add('hidden');$('app').classList.remove('hidden');document.querySelectorAll('.admin-only').forEach(x=>x.classList.toggle('hidden',user.role!=='admin'));$('who').innerHTML=`<b>${esc(user.name)}</b><br>${esc(user.role)}`;renderAll()}catch(e){logout(false)}}
 function logout(call=true){if(call&&token)api('/api/logout',{method:'POST'}).catch(()=>{});token='';localStorage.removeItem('telecToken');$('app').classList.add('hidden');$('login').classList.remove('hidden')}
