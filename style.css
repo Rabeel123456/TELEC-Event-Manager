@@ -109,3 +109,39 @@
 .page-dashboard{
     padding-bottom:20px;
 }
+/* Login page */
+.login-card{
+    text-align:center;
+}
+
+.login-card form{
+    text-align:left;
+}
+
+.brand{
+    display:block;
+    text-align:center;
+    font-size:56px;
+    font-weight:800;
+    margin-bottom:10px;
+}
+
+.login-card h1{
+    text-align:center;
+    margin-bottom:10px;
+}
+
+.login-card p{
+    text-align:center;
+    margin-bottom:30px;
+}
+.login-card::after{
+    content:"Developed by Rabeel Ahmed Siddiqui";
+    display:block;
+    margin-top:20px;
+    padding-top:15px;
+    border-top:1px solid #e5e7eb;
+    font-size:13px;
+    color:#6b7280;
+    text-align:center;
+}
