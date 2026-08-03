@@ -1,0 +1,17 @@
+{
+  "name": "telec-event-manager-professional",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "create-admin": "node scripts/create-admin.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.55.0",
+    "bcryptjs": "^3.0.2"
+  },
+  "devDependencies": {
+    "vercel": "^44.7.3"
+  }
+}
